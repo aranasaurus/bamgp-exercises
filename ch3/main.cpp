@@ -20,9 +20,9 @@ int main() {
     SDL_Surface* surface = SDL_GetWindowSurface( window );
 
     Uint32 color1, color2;
-    color1 = SDL_MapRGB( surface->format, 20, 20, 20 );
-    color2 = SDL_MapRGB( surface->format, 20, 200, 20 );
-    drawGradient( surface, 20, 780, 100, color1, color2 );
+    color1 = SDL_MapRGB( surface->format, 200, 40, 40 );
+    color2 = SDL_MapRGB( surface->format, 40, 40, 200 );
+    drawGradient( surface, 0, 799, 299, color1, color2 );
 
     SDL_UpdateWindowSurface( window );
 
