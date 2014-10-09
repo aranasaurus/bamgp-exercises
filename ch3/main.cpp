@@ -4,12 +4,20 @@
 bool runEventLoop();
 void drawPixel( SDL_Surface* surface, int x, int y, Uint8 r, Uint8 g, Uint8 b );
 void drawGradient( SDL_Surface* surface, int x1, int x2, int y, Uint32 color1, Uint32 color2 );
+bool loadFiles();
+void freeFiles();
+SDL_Surface* loadImage( char* fileName );
 
-void ex1( SDL_Surface* surface );
-void ex2( SDL_Surface* surface );
+void ex1();
+void ex2();
+void ex3();
 
 const int WIN_W = 1440;
 const int WIN_H = 900;
+
+SDL_Surface* backBuffer = NULL;
+SDL_Surface* Background = NULL;
+SDL_Surface* SpriteImage = NULL;
 
 int main() {
     if ( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_EVENTS ) < 0 ) {
@@ -24,9 +32,21 @@ int main() {
         return 0;
     }
 
-    SDL_Surface* surface = SDL_GetWindowSurface( window );
+    backBuffer = SDL_GetWindowSurface( window );
+    srand( time( NULL ) );
 
-    ex2( surface );
+    if ( !loadFiles() ) {
+        printf( "Failed to load files!\n" );
+        freeFiles();
+        SDL_Quit();
+        return 0;
+    }
+
+    /*
+    ex1();
+    ex2();
+    */
+    ex3();
     while ( runEventLoop() ) {
         SDL_UpdateWindowSurface( window );
         SDL_Delay( 20 );
@@ -37,16 +57,15 @@ int main() {
     return 0;
 }
 
-void ex1( SDL_Surface* surface ) {
+void ex1() {
     SDL_SetWindowTitle( SDL_GL_GetCurrentWindow(), "ex1" );
     Uint32 color1, color2;
-    color1 = SDL_MapRGB( surface->format, 200, 40, 40 );
-    color2 = SDL_MapRGB( surface->format, 40, 40, 200 );
-    drawGradient( surface, 0, WIN_W-1, WIN_H/2-1, color1, color2 );
+    color1 = SDL_MapRGB( backBuffer->format, 200, 40, 40 );
+    color2 = SDL_MapRGB( backBuffer->format, 40, 40, 200 );
+    drawGradient( backBuffer, 0, WIN_W-1, WIN_H/2-1, color1, color2 );
 }
 
-void ex2( SDL_Surface* surface ) {
-    srand( time( NULL ) );
+void ex2() {
     SDL_SetWindowTitle( SDL_GL_GetCurrentWindow(), "ex2" );
     SDL_Color c;
     c.r = 40;
@@ -89,7 +108,54 @@ void ex2( SDL_Surface* surface ) {
         }
     }
 
-    SDL_FillRects( surface, rects, 10, SDL_MapRGB( surface->format, c.r, c.g, c.b ) );
+    SDL_FillRects( backBuffer, rects, 10, SDL_MapRGB( backBuffer->format, c.r, c.g, c.b ) );
+}
+
+void ex3() {
+    SDL_SetWindowTitle( SDL_GL_GetCurrentWindow(), "ex3" );
+    SDL_Rect sprite1;
+    SDL_Rect sprite2;
+
+    sprite1.x = WIN_W/2;
+    sprite1.y = WIN_H/2;
+    sprite2.x = sprite1.x + 10;
+    sprite2.y = sprite1.y + 10;
+
+    SDL_BlitSurface( Background, NULL, backBuffer, NULL );
+    SDL_BlitSurface( SpriteImage, NULL, backBuffer, &sprite1 );
+    SDL_BlitSurface( SpriteImage, NULL, backBuffer, &sprite2 );
+}
+
+bool loadFiles() {
+    Background = loadImage( (char*)"res/background.bmp" );
+    SpriteImage = loadImage( (char*)"res/spaceship.bmp" );
+
+    return Background != NULL && SpriteImage != NULL;
+}
+
+void freeFiles() {
+}
+
+SDL_Surface* loadImage( char* fileName ) {
+    SDL_Surface *image = NULL;
+    SDL_Surface *procImage = NULL;
+
+    image = SDL_LoadBMP( fileName );
+    if ( image == NULL ) {
+        return NULL;
+    }
+
+    procImage = SDL_ConvertSurface( image, backBuffer->format, 0 );
+    SDL_FreeSurface( image );
+
+    if ( procImage == NULL ) {
+        return NULL;
+    }
+
+    Uint32 colorKey = SDL_MapRGB( procImage->format, 0xff, 0, 0xff );
+    SDL_SetColorKey( procImage, SDL_TRUE, colorKey );
+
+    return procImage;
 }
 
 void drawGradient( SDL_Surface* surface, int x1, int x2, int y, Uint32 color1, Uint32 color2 ) {
