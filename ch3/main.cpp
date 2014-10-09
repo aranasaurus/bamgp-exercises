@@ -1,8 +1,15 @@
 #include <SDL.h>
+#include <time.h>
 
 bool runEventLoop();
 void drawPixel( SDL_Surface* surface, int x, int y, Uint8 r, Uint8 g, Uint8 b );
 void drawGradient( SDL_Surface* surface, int x1, int x2, int y, Uint32 color1, Uint32 color2 );
+
+void ex1( SDL_Surface* surface );
+void ex2( SDL_Surface* surface );
+
+const int WIN_W = 1440;
+const int WIN_H = 900;
 
 int main() {
     if ( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_EVENTS ) < 0 ) {
@@ -10,7 +17,7 @@ int main() {
         return 0;
     }
 
-    SDL_Window* window = SDL_CreateWindow( "Gradient!", NULL, NULL, 800, 600, SDL_WINDOW_SHOWN );
+    SDL_Window* window = SDL_CreateWindow( "Let's Rock!", NULL, NULL, WIN_W, WIN_H, SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_SHOWN );
 
     if ( window == NULL ) {
         printf( "Failed to create SDL Window: %s\n", SDL_GetError() );
@@ -19,20 +26,70 @@ int main() {
 
     SDL_Surface* surface = SDL_GetWindowSurface( window );
 
-    Uint32 color1, color2;
-    color1 = SDL_MapRGB( surface->format, 200, 40, 40 );
-    color2 = SDL_MapRGB( surface->format, 40, 40, 200 );
-    drawGradient( surface, 0, 799, 299, color1, color2 );
-
-    SDL_UpdateWindowSurface( window );
-
+    ex2( surface );
     while ( runEventLoop() ) {
+        SDL_UpdateWindowSurface( window );
         SDL_Delay( 20 );
     }
 
     SDL_DestroyWindow( window );
     SDL_Quit();
     return 0;
+}
+
+void ex1( SDL_Surface* surface ) {
+    SDL_SetWindowTitle( SDL_GL_GetCurrentWindow(), "ex1" );
+    Uint32 color1, color2;
+    color1 = SDL_MapRGB( surface->format, 200, 40, 40 );
+    color2 = SDL_MapRGB( surface->format, 40, 40, 200 );
+    drawGradient( surface, 0, WIN_W-1, WIN_H/2-1, color1, color2 );
+}
+
+void ex2( SDL_Surface* surface ) {
+    srand( time( NULL ) );
+    SDL_SetWindowTitle( SDL_GL_GetCurrentWindow(), "ex2" );
+    SDL_Color c;
+    c.r = 40;
+    c.g = 225;
+    c.b = 40;
+    c.a = 255;
+
+    SDL_Rect rects[10];
+
+    for ( int i = 0; i < 10; i++ ) {
+        SDL_Rect r;
+        r.x = rand()%WIN_W;
+        r.y = rand()%WIN_H;
+        r.w = 50;
+        r.h = 100;
+
+        bool colliding = false;
+        for ( int j = i-1; j >= 0; j-- ) {
+            SDL_Rect r2 = rects[j];
+            int cx1 = r.x + (r.w/2);
+            int cx2 = r2.x + (r2.w/2);
+            int cy1 = r.y + (r.y/2);
+            int cy2 = r2.y + (r2.y/2);
+
+            int xDist = abs( cx1 - cx2 );
+            int yDist = abs( cy1 - cy2 );
+            int touchDistX = (r.w/2) + (r2.w/2);
+            int touchDistY = (r.h/2) + (r2.h/2);
+
+            if ( xDist <= touchDistX || yDist <= touchDistY ) {
+                colliding = true;
+                break;
+            }
+        }
+
+        if ( colliding ) {
+            i--;
+        } else {
+            rects[i] = r;
+        }
+    }
+
+    SDL_FillRects( surface, rects, 10, SDL_MapRGB( surface->format, c.r, c.g, c.b ) );
 }
 
 void drawGradient( SDL_Surface* surface, int x1, int x2, int y, Uint32 color1, Uint32 color2 ) {
